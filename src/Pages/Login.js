@@ -4,12 +4,15 @@ import Form from 'react-bootstrap/Form';
 import Button from 'react-bootstrap/Button';
 import Dashboard from './Dashboard';
 
-const baseURL = 'http://localhost:4000/empfullDetails';
-const loginUrl = 'http://localhost:4000/login';
+const baseURL = 'http://127.0.0.1:8000//getAnalyticsByID';
+const loginUrl = 'http://127.0.0.1:8000/login';
 export default function Login() {
   // React States
-  const [errorMessages, setErrorMessages] = useState({});
-  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isLoginSuccessful, setIsLoginSuccessful] = useState(false);
+  const [emp_id, setEmp_id] = useState("");
+  const [password, setPassword] = useState("");
+
+  localStorage.clear();
 
   const errors = {
     uname: 'Invalid Username',
@@ -20,42 +23,36 @@ export default function Login() {
     //Prevent page reload
     event.preventDefault();
 
-    const payload = {
-      email: Form.Control.uname,
-      password: Form.Control.pass
+    let empId = Number(emp_id);
+    if (isNaN(empId)) {
+
+      return
     }
 
+    const payload = {
+      emp_id: empId,
+      password: password,
+    }
+    console.log(payload);
     fetch(loginUrl, {
       method: "POST",
-      body: JSON.stringify(payload)
+      body: JSON.stringify(payload),
+      headers:{
+        'Content-Type': 'application/json'
+      }
     })
       .then((res) => res.json())
-      .then(json => {
-        console.log("json", json)
+      .then(data => {
+        localStorage.setItem('login_status', true);
+        setIsLoginSuccessful(true);
+        console.log(data)
+        localStorage.setItem('user_Data', JSON.stringify(data));
+        localStorage.setItem('user_Name', JSON.stringify(data.EmpName));
+      })
+      .catch((error) => {
 
-        
-       
-        const userData =   (json.Email === payload.email);
-          // Compare user info
-          if (userData) {
-            if (userData.Password !== password) {
-              // Invalid password
-              setErrorMessages({ name: 'pass', message: errors.pass });
-            } else {
-              setIsSubmitted(true);
-            }
-          } else {
-            // Username not found
-            setErrorMessages({ name: 'uname', message: errors.uname });
-          }
-        
       })
   }
-// Generate JSX code for error message
- const renderErrorMessage = (name) =>
-  name === errorMessages.name && (
-     <div className="error">{errorMessages.message}</div>
-  );
 
   const renderForm = (
     <div className="chart-align my-10">
@@ -76,14 +73,16 @@ export default function Login() {
             </Form.Label>
             <div className="mb-3 ">
               <Form.Control
-                type="text"
-                placeholder="Enter Employee EMAIL ID"
-                name="uname"
+                type="integer"
+                 placeholder="Enter Employee ID"
+                name="emp_id"
+                value={emp_id}
+                onChange={(e) => setEmp_id(e.target.value)}
                 // controlId="email"
                 required
               />
             </div>
-            {renderErrorMessage('uname')}
+
           </div>
           <div className="mb-3 ms-6">
             <Form.Label>
@@ -93,12 +92,14 @@ export default function Login() {
               <Form.Control
                 type="password"
                 placeholder="Enter Password"
-                name="pass"
+                name="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 // controlId="password"
                 required
               />
             </div>
-            {renderErrorMessage('pass')}
+
           </div>
 
           <div className="form-center">
@@ -110,7 +111,7 @@ export default function Login() {
       </div>
     </div>
   );
-  return <div>{isSubmitted ? <Dashboard /> : renderForm}</div>;
+  return <div>{isLoginSuccessful ? <Dashboard /> : renderForm}</div>;
 
 
 }
